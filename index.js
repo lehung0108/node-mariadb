@@ -25,7 +25,7 @@ app.get('/db', (req, res) => {
   connection.connect((err) => {
     if (err) {
       console.error('Error connecting to MariaDB: ' + err);
-      return res.status(500).send('Error connecting to the database');
+      return res.json(err);
     }
     console.log('Connected to MariaDB');
 
