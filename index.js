@@ -13,7 +13,15 @@ const dbConfig = {
 
 const connection = mysql.createConnection(dbConfig);
 
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
 app.get('/', (req, res) => {
+  res.json({ message: `Server is running on port ${port}`, 'DB info': dbConfig });
+});
+
+app.get('/db', (req, res) => {
   connection.connect((err) => {
     if (err) {
       console.error('Error connecting to MariaDB: ' + err);
@@ -24,8 +32,4 @@ app.get('/', (req, res) => {
     // Respond with a success message
     res.json({ message: 'Connected to MariaDB successfully' });
   });
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
 });
