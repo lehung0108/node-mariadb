@@ -18,7 +18,7 @@ app.listen(port, () => {
 });
 
 app.get('/', (req, res) => {
-  res.json({ message: `Server is running on port ${port}`, 'DB info': dbConfig });
+  res.json({ message: `Server is running on port ${port}`, 'DB info': dbConfig, 'NodeJS verion': process.version });
 });
 
 app.get('/db', (req, res) => {
