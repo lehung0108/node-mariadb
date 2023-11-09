@@ -8,10 +8,10 @@ run:
   command: node index.js
   env:
     - name: DB_HOST
-      value: your-mariadb-host
+      value: test.ccvd7vmslxoh.eu-west-2.rds.amazonaws.com
     - name: DB_USER
-      value: your-mariadb-username
+      value: admin
     - name: DB_PASSWORD
-      value: your-mariadb-password
+      value: Test123456
     - name: DB_DATABASE
-      value: your-mariadb-database
+      value: test
