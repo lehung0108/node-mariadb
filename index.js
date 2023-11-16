@@ -11,23 +11,29 @@ const dbConfig = {
   database: process.env.DB_DATABASE || 'openbadges'
 };
 
-const connection = mysql.createConnection(dbConfig);
+// Create a connection pool
+const pool = mysql.createPool(dbConfig);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
 
 app.get('/', (req, res) => {
-  res.json({ message: `Server is running on port ${port}`, 'DB info': dbConfig, 'NodeJS verion': process.version });
+  res.json({ message: `Server is running on port ${port}`, 'DB info': dbConfig, 'NodeJS verion 20': process.version });
 });
 
 app.get('/db', (req, res) => {
-  connection.connect((err) => {
+  // Get a connection from the pool
+  pool.getConnection((err, connection) => {
     if (err) {
-      console.error('Error connecting to MariaDB: ' + err);
+      console.error('Error getting connection from pool: ' + err);
       return res.json(err);
     }
+
     console.log('Connected to MariaDB');
+
+    // Release the connection back to the pool
+    connection.release();
 
     // Respond with a success message
     res.json({ message: 'Connected to MariaDB successfully' });
