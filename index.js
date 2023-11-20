@@ -6,7 +6,6 @@ const app = express();
 const port = process.env.PORT || 8080;
 
 const secretName = "your-secret-name";
-;
 
 const secretsManagerClient = new SecretsManagerClient({
   region: 'your-aws-region',
