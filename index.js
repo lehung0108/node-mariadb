@@ -1,75 +1,45 @@
 const express = require('express');
 const mysql = require('mysql');
-const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
+const { getSecretValue } = require('./secretsManager');
 
 const app = express();
 const port = process.env.PORT || 8080;
+let awsSecret;
 
-const secretName = "your-secret-name";
+(async () => {
+    try {
+        awsSecret = await getSecretValue();
+    } catch (error) {
+        console.error('Error fetching AWS Secret:', error);
+        process.exit(1);
+    }
 
-const secretsManagerClient = new SecretsManagerClient({
-  region: 'your-aws-region',
-  credentials: {
-    accessKeyId: 'your-access-key-id',
-    secretAccessKey: 'your-secret-access-key'
-  }
-});
+    const secretObject = JSON.parse(awsSecret);
+    const dbConfig = {
+        host: process.env.host || secretObject.host,
+        user: process.env.username || secretObject.username,
+        password: process.env.password || secretObject.password,
+        database: process.env.dbInstanceIdentifier || secretObject.dbInstanceIdentifier,
+    };
 
-let dbConfig;
-
-async function getDbConfig() {
-  try {
-    const response = await secretsManagerClient.send(
-        new GetSecretValueCommand({
-          SecretId: secretName,
-          VersionStage: "AWSCURRENT",
-        })
-    );
-
-    dbConfig = JSON.parse(response.SecretString);
-
-    console.log('Retrieved DB configuration from Secrets Manager');
-    startServer();
-  } catch (error) {
-    console.error('Error retrieving DB configuration from Secrets Manager: ', error);
-    process.exit(1); // Exit the application on failure
-  }
-}
-
-function startServer() {
-  const pool = mysql.createPool({
-    connectionLimit: 10,
-    host: dbConfig.host,
-    user: dbConfig.username,
-    password: dbConfig.password,
-    database: dbConfig.database,
-    acquireTimeout: 10000,
-  });
-
-  app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-  });
-
-  app.get('/', (req, res) => {
-    res.json({
-      message: `Server is running on port ${port}`,
-      'DB info': dbConfig,
-      'NodeJS version': process.version
+    const pool = mysql.createPool(dbConfig);
+    app.listen(port, () => {
+        console.log(`Server is running on port ${port}`);
     });
-  });
 
-  app.get('/db', (req, res) => {
-    pool.getConnection((err, connection) => {
-      if (err) {
-        console.error('Error getting connection from pool: ' + err);
-        return res.json(err);
-      }
-
-      console.log('Connected to MariaDB');
-      connection.release();
-      res.json({ message: 'Connected to MariaDB successfully' });
+    app.get('/', (req, res) => {
+        res.json({ message: `Server is running on port ${port}`, 'DB info': dbConfig, 'NodeJS version': process.version });
     });
-  });
-}
 
-getDbConfig();
+    app.get('/db', (req, res) => {
+        pool.getConnection((err, connection) => {
+            if (err) {
+                console.error('Error getting connection from pool: ' + err);
+                return res.json(err);
+            }
+            console.log('Connected to MariaDB');
+            connection.release();
+            res.json({ message: 'Connected to MariaDB successfully' });
+        });
+    });
+})();
